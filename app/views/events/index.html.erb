@@ -1,0 +1,21 @@
+<main>
+  <h1>Upcoming events</h1>
+  <% if @events.empty? %>
+    <section aria-live="polite">
+      <h2>No events synced yet</h2>
+      <p>Configure <code>BILLETTO_API_KEYPAIR</code> on the server, then run <code>bin/rails events:sync</code>.</p>
+    </section>
+  <% else %>
+    <% @events.each do |event| %>
+      <article>
+        <h2><%= event.title %></h2>
+        <p><time datetime="<%= event.starts_at.iso8601 %>"><%= l(event.starts_at, format: :long) %></time></p>
+        <% if event.image_url.present? %>
+          <img src="<%= event.image_url %>" alt="" loading="lazy">
+        <% end %>
+        <p><%= event.description %></p>
+        <p>Upvotes: <%= @vote_counts.fetch([event.id, "up"], 0) %> · Downvotes: <%= @vote_counts.fetch([event.id, "down"], 0) %></p>
+      </article>
+    <% end %>
+  <% end %>
+</main>
