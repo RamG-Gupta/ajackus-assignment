@@ -20,4 +20,17 @@ RSpec.describe Events::CastVote do
       Rails.configuration.command_bus.call(described_class.new(event_id: event.id, clerk_user_id: "user_123", value: "maybe"))
     end.to raise_error(ArgumentError)
   end
+
+  it "keeps repeated votes idempotent, switches a vote, and supports removal" do
+    vote = ->(value) { Rails.configuration.command_bus.call(described_class.new(event_id: event.id, clerk_user_id: "user_repeat", value: value)) }
+
+    vote.call("up")
+    expect { vote.call("up") }.not_to change { Rails.configuration.event_store.read.stream("Event$#{event.id}").count }
+    vote.call("down")
+    expect(event.reload.vote_counts).to eq("down" => 1)
+    vote.call("remove")
+    expect(event.reload.vote_counts).to eq({})
+    expect { vote.call("remove") }.not_to change { Rails.configuration.event_store.read.stream("Event$#{event.id}").count }
+    expect(Rails.configuration.event_store.read.stream("Event$#{event.id}").map(&:event_type)).to include("Events::VoteRemoved")
+  end
 end

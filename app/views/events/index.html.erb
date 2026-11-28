@@ -14,7 +14,12 @@
           <img src="<%= event.image_url %>" alt="" loading="lazy">
         <% end %>
         <p><%= event.description %></p>
-        <p>Upvotes: <%= @vote_counts.fetch([event.id, "up"], 0) %> · Downvotes: <%= @vote_counts.fetch([event.id, "down"], 0) %></p>
+        <div data-vote-url="<%= event_vote_path(event) %>">
+          <p>Upvotes: <span data-up-count><%= @vote_counts.fetch([event.id, "up"], 0) %></span> · Downvotes: <span data-down-count><%= @vote_counts.fetch([event.id, "down"], 0) %></span></p>
+          <button type="button" data-vote-action="up" disabled>Like</button>
+          <button type="button" data-vote-action="down" disabled>Dislike</button>
+          <button type="button" data-vote-action="remove" disabled>Remove vote</button>
+        </div>
       </article>
     <% end %>
   <% end %>

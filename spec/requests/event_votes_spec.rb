@@ -13,7 +13,8 @@ RSpec.describe "Event votes", type: :request do
 
     get root_path
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Event", "Upvotes: 1", "Downvotes: 0")
+    expect(response.body).to include("Event", "Upvotes:", "Downvotes:")
+    expect(response.body).to include('data-up-count>1</span>', 'data-down-count>0</span>')
 
     get events_path(format: :json)
     expect(response).to have_http_status(:ok)
@@ -42,7 +43,7 @@ RSpec.describe "Event votes", type: :request do
 
     post event_vote_path(event), params: { value: "up" }, headers: { "Authorization" => "Bearer #{token}" }, as: :json
 
-    expect(response).to have_http_status(:created)
+    expect(response).to have_http_status(:ok)
     expect(EventVote.find_by!(event: event).clerk_user_id).to eq("user_456")
   ensure
     %w[CLERK_JWT_KEY CLERK_ISSUER CLERK_AUTHORIZED_PARTIES].each { |name| ENV.delete(name) }

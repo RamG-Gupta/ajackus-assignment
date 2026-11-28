@@ -9,7 +9,12 @@ module Billetto
     def call
       imported = 0
       client.each_public_event_page do |records|
-        normalized = records.map { |record| normalize(record) }
+        normalized = records.filter_map do |record|
+          normalize(record)
+        rescue InvalidEvent => error
+          Rails.logger.warn("Skipping invalid Billetto event: #{error.message}")
+          nil
+        end
         unless normalized.empty?
           Event.transaction do
             Event.upsert_all(
@@ -34,11 +39,11 @@ module Billetto
       data = record.with_indifferent_access
       external_id = data[:id] || data[:event_id]
       title = data[:title] || data[:name]
-      starts_at = data[:starts_at] || data[:start_at] || data[:start_date]
+      starts_at = data[:startdate] || data[:starts_at] || data[:start_at] || data[:start_date]
       raise InvalidEvent, "Event is missing an ID, title, or start time" if [ external_id, title, starts_at ].any?(&:blank?)
 
       parsed_start = Time.zone.parse(starts_at.to_s)
-      parsed_end = parse_time(data[:ends_at] || data[:end_at] || data[:end_date])
+      parsed_end = parse_time(data[:enddate] || data[:ends_at] || data[:end_at] || data[:end_date])
       raise InvalidEvent, "Event has an invalid date" unless parsed_start
       raise InvalidEvent, "Event end time must be after start time" if parsed_end && parsed_end <= parsed_start
 
@@ -60,7 +65,7 @@ module Billetto
 
     def image_url(data)
       image = data[:image]
-      image.is_a?(Hash) ? (data[:image_url] || image[:url] || image["url"]) : data[:image_url] || image
+      image.is_a?(Hash) ? (data[:image_link] || data[:image_url] || image[:url] || image["url"]) : data[:image_link] || data[:image_url] || image
     end
   end
 end

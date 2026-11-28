@@ -1,6 +1,6 @@
 Rails.application.routes.draw do
   resources :events, only: :index do
-    resource :vote, only: :create, controller: :event_votes
+    resource :vote, only: [ :create, :destroy ], controller: :event_votes
   end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

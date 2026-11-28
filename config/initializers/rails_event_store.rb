@@ -2,7 +2,9 @@ require "arkency/command_bus"
 
 Rails.application.config.to_prepare do
   event_store = RailsEventStore::JSONClient.new
-  event_store.subscribe(Events::ApplyVote, to: [ Events::Upvoted, Events::Downvoted ])
+  Events.subscriptions.each do |handler, event_classes|
+    event_store.subscribe(handler, to: event_classes)
+  end
   Rails.configuration.event_store = event_store
 
   command_bus = Arkency::CommandBus.new
